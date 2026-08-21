@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메가 시티 타이쿤 - 모딩 확장팩</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Malgun Gothic', dotum, sans-serif;
+        }
+
+        body {
+            background-color: #161820;
+            color: #f5f6fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1300px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 20px;
+        }
+
+        .main-panel {
+            background: #1e212f;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2d3249;
+            padding-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 26px;
+            color: #4cd137;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #2d3245;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .stat-item span {
+            color: #00a8ff;
+        }
+
+        .promo-container {
+            background: #252836;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            border: 1px dashed #4cd137;
+        }
+
+        .promo-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #4cd137;
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .promo-input {
+            background: #161820;
+            border: 1px solid #3d445f;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .promo-btn {
+            background: #00a8ff;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .promo-btn:hover { background: #0097e6; }
+
+        .city-grid {
+            background: #11131a;
+            border: 3px solid #2d3245;
+            border-radius: 8px;
+            height: 380px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .city-tile {
+            background: #222533;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .city-tile.built:hover {
+            background: #d63031 !important;
+            transform: scale(1.05);
+        }
+        
+        .city-tile.built:hover::after {
+            content: "💥철거 (50% 반환)";
+            position: absolute;
+            font-size: 9px;
+            bottom: 2px;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        .city-tile:not(.built):hover {
+            transform: scale(1.05);
+            background: #2d3245;
+        }
+
+        .click-area {
+            text-align: center;
+        }
+
+        .click-btn {
+            background: linear-gradient(135deg, #4cd137, #44bd32);
+            color: white;
+            border: none;
+            padding: 15px 45px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(68, 189, 50, 0.4);
+        }
+
+        .shop-panel {
+            background: #1e212f;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 850px;
+            overflow-y: auto;
+        }
+
+        .shop-panel::-webkit-scrollbar { width: 6px; }
+        .shop-panel::-webkit-scrollbar-thumb { background: #2d3245; border-radius: 3px; }
+
+        .shop-panel h2 {
+            font-size: 17px;
+            border-bottom: 2px solid #2d3245;
+            padding-bottom: 6px;
+            color: #00a8ff;
+            margin-top: 5px;
+        }
+
+        .category-desc {
+            font-size: 11px;
+            color: #a4b0be;
+            margin-top: -10px;
+        }
+
+        .build-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .build-card {
+            background: #252836;
+            border: 1px solid transparent;
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border 0.2s;
+        }
+
+        .build-card:hover { border-color: #00a8ff; }
+
+        .build-info { display: flex; flex-direction: column; gap: 2px; }
+
+        .build-title {
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .build-effect { font-size: 11px; color: #cbd5e1; }
+        .build-count { font-size: 11px; color: #00a8ff; font-weight: bold; }
+
+        .buy-btn {
+            background: #00a8ff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 85px;
+            text-align: center;
+        }
+
+        .buy-btn:disabled {
+            background: #4b5563;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* 🛠️ 모드 제어 상자 디자인 */
+        .mod-export-box {
+            margin-top: 5px;
+            background: #11131a;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .export-btn {
+            background: #eccc68;
+            color: #11131a;
+            border: none;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .export-btn:hover { background: #ff7f50; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="main-panel">
+        <header>
+            <h1>🏙️ 메가 시티 타이쿤 v2.5</h1>
+            <div class="stats-bar">
+                <div class="stat-item">💰 자금: <span id="stat-money">0</span> G</div>
+                <div class="stat-item">👥 인구: <span id="stat-pop" style="color:#4cd137;">0</span> 명</div>
+                <div class="stat-item">📈 수익: <span id="stat-gps" style="color:#eccc68;">0</span> G/s</div>
+            </div>
+        </header>
+
+        <div class="promo-container">
+            <span class="promo-title">🎟️ 프로모션 코드 (city 입력)</span>
+            <div class="promo-input-group">
+                <input type="text" id="promo-code-input" class="promo-input" placeholder="코드를 입력하세요">
+                <button class="promo-btn" id="promo-code-btn">사용</button>
+            </div>
+        </div>
+
+        <div class="city-grid" id="city-board"></div>
+
+        <div class="click-area">
+            <button class="click-btn" id="manual-click">🏢 국세 징수하기 (+10 G)</button>
+        </div>
+    </div>
+
+    <div class="shop-panel">
+        <h2>🏠 주거 단지 확장 (인구 공급)</h2>
+        <p class="category-desc">다양한 규격의 주택을 지어 주민 입주를 유도합니다.</p>
+        <div class="build-list" id="list-residential"></div>
+
+        <h2>🏪 다기능 편의 시설 (상권 형성)</h2>
+        <p class="category-desc">생활 인프라를 확충하여 상업 효율을 강화합니다.</p>
+        <div class="build-list" id="list-amenity"></div>
+
+        <h2>🏢 고층 마천루 빌딩 (대형 투자)</h2>
+        <p class="category-desc">랜드마크 및 대기업 오피스를 통해 대규모 자금을 회수합니다.</p>
+        <div class="build-list" id="list-commercial"></div>
+
+        <h2>🛠️ 커스텀 모드 빌딩 (Mod 카테고리)</h2>
+        <div class="mod-export-box">
+            <span style="font-size: 11px; color:#a4b0be;">단돈 100 G로 영입하는 커스텀 아키텍처</span>
+            <button class="export-btn" id="export-mod-btn">💾 .citybuildermod 추출</button>
+        </div>
+        <div class="build-list" id="list-mod"></div>
+    </div>
+</div>
+<script>
+    // 시스템 데이터 상태 관리
+    const state = {
+        money: 100, 
+        population: 0,
+        gps: 0,
+        builtBuildings: new Array(50).fill(null),
+        isPromoUsed: false
+    };
+
+    // 🏗️ 확장팩 대용량 건축물 정보 데이터 테이블
+    const buildingData = {
+        // 주거 카테고리 (더 많은 집 추가)
+        residential: [
+            { id: 'wood_house', name: '나무 오두막', icon: '🪵', cost: 40, baseCost: 40, pop: 3, gps: 0, count: 0 },
+            { id: 'iron_house', name: '조립식 가옥', icon: '🏡', cost: 200, baseCost: 200, pop: 12, gps: 0, count: 0 },
+            { id: 'brick_villa', name: '붉은벽돌 빌라', icon: '🏘️', cost: 650, baseCost: 650, pop: 32, gps: 0, count: 0 },
+            { id: 'concrete_apt', name: '현대식 아파트', icon: '🏢', cost: 1500, baseCost: 1500, pop: 70, gps: 0, count: 0 },
+            { id: 'cyber_complex', name: '네오 주거단지', icon: '🌐', cost: 5500, baseCost: 5500, pop: 240, gps: 0, count: 0 }
+        ],
+        // 편의시설 카테고리 (인프라 강화)
+        amenity: [
+            { id: 'conv_store', name: '24시 편의점', icon: '🏪', cost: 150, baseCost: 150, pop: 1, gps: 5, count: 0 },
+            { id: 'sauna', name: '황토 사우나', icon: '♨️', cost: 800, baseCost: 800, pop: 3, gps: 20, count: 0 },
+            { id: 'pc_room', name: '24시 PC카페', icon: '🎮', cost: 2200, baseCost: 2200, pop: 5, gps: 54, count: 0 },
+            { id: 'hotel', name: '럭셔리 호텔', icon: '🏨', cost: 5000, baseCost: 5000, pop: 15, gps: 110, count: 0 },
+            { id: 'theme_park', name: '도심 아쿠아리움', icon: '🐬', cost: 18000, baseCost: 18000, pop: 40, gps: 420, count: 0 }
+        ],
+        // 마천루 빌딩 카테고리 (대기업 및 전망대 다수 추가)
+        commercial: [
+            { id: 'office', name: '벤처 테크타워', icon: '🖥️', cost: 16000, baseCost: 16000, pop: 25, gps: 380, count: 0 },
+            { id: 'bank', name: '중앙 금융 빌딩', icon: '🏦', cost: 45000, baseCost: 45000, pop: 35, gps: 1150, count: 0 },
+            { id: 'observatory', name: 'N타워 전망대', icon: '🗼', cost: 90000, baseCost: 90000, pop: 60, gps: 2200, count: 0 },
+            { id: 'mega_hq', name: '글로벌 무역 센터', icon: '🏰', cost: 250000, baseCost: 250000, pop: 150, gps: 6800, count: 0 }
+        ],
+        // 🛠️ 요청하신 모드 빌딩 카테고리 (모두 고정 가격 100 G)
+        mod: [
+            { id: 'mod_studio', name: '인디 모드 스튜디오', icon: '💻', cost: 100, baseCost: 100, pop: 10, gps: 5, count: 0 },
+            { id: 'mod_cyber', name: '사이버펑크 네온탑', icon: '🎆', cost: 100, baseCost: 100, pop: 20, gps: 12, count: 0 },
+            { id: 'mod_secret', name: '비밀 지하 연구소', icon: '🧪', cost: 100, baseCost: 100, pop: 5, gps: 25, count: 0 }
+        ]
+    };
+
+    const totalTiles = 50;
+    const moneyDisplay = document.getElementById('stat-money');
+    const popDisplay = document.getElementById('stat-pop');
+    const gpsDisplay = document.getElementById('stat-gps');
+    const cityBoard = document.getElementById('city-board');
+    // 맵 보드 초기화 및 클릭 이벤트 바인딩
+    function initMap() {
+        cityBoard.innerHTML = '';
+        for (let i = 0; i < totalTiles; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'city-tile';
+            tile.id = `tile-${i}`;
+            tile.textContent = '🌱';
+            
+            tile.addEventListener('click', () => {
+                demolishBuilding(i);
+            });
+            
+            cityBoard.appendChild(tile);
+        }
+    }
+
+    // UI 데이터 출력 동기화 함수
+    function render() {
+        moneyDisplay.textContent = Math.floor(state.money).toLocaleString();
+        popDisplay.textContent = state.population.toLocaleString();
+        gpsDisplay.textContent = state.gps.toLocaleString();
+
+        Object.keys(buildingData).forEach(cat => {
+            buildingData[cat].forEach(b => {
+                const btn = document.getElementById(`btn-${b.id}`);
+                const countLbl = document.getElementById(`count-${b.id}`);
+                if (btn) {
+                    btn.disabled = state.money < b.cost;
+                    // 모드 빌딩(mod)은 무조건 가격을 100 G로 고정 표기하고, 다른 일반 건물은 인플레이션 가격 표기
+                    if (cat === 'mod') {
+                        btn.textContent = `100 G`;
+                    } else {
+                        btn.textContent = `${Math.floor(b.cost).toLocaleString()} G`;
+                    }
+                }
+                if (countLbl) {
+                    countLbl.textContent = `보유: ${b.count}개`;
+                }
+            });
+        });
+
+        for (let i = 0; i < totalTiles; i++) {
+            const tile = document.getElementById(`tile-${i}`);
+            if (state.builtBuildings[i]) {
+                tile.textContent = state.builtBuildings[i].icon;
+                tile.classList.add('built');
+            } else {
+                tile.textContent = '🌱';
+                tile.classList.remove('built');
+            }
+        }
+    }
+
+    // 상점 인터페이스 목록 그리기
+    function buildShopUI() {
+        Object.keys(buildingData).forEach(category => {
+            const container = document.getElementById(`list-${category}`);
+            container.innerHTML = '';
+            
+            buildingData[category].forEach(b => {
+                const card = document.createElement('div');
+                card.className = 'build-card';
+                card.innerHTML = `
+                    <div class="build-info">
+                        <div class="build-title">
+                            <span>${b.icon} ${b.name}</span>
+                            <span class="build-count" id="count-${b.id}">보유: 0개</span>
+                        </div>
+                        <div class="build-effect">👥 +${b.pop}명 | 📈 +${b.gps}G/s</div>
+                    </div>
+                    <button class="buy-btn" id="btn-${b.id}" onclick="buyBuilding('${category}', '${b.id}')">
+                        ${b.cost} G
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        });
+    }
+
+    // 기본 수동 클릭 징수
+    document.getElementById('manual-click').addEventListener('click', () => {
+        state.money += 10;
+        render();
+    });
+
+    // 프로모션 코드 검증 및 처리 로직
+    document.getElementById('promo-code-btn').addEventListener('click', () => {
+        const inputField = document.getElementById('promo-code-input');
+        const code = inputField.value.trim();
+
+        if (state.isPromoUsed) {
+            alert('이미 프로모션 코드를 사용하셨습니다!');
+            return;
+        }
+
+        if (code === 'city') {
+            state.money += 20000;
+            state.isPromoUsed = true;
+            inputField.disabled = true;
+            document.getElementById('promo-code-btn').disabled = true;
+            document.getElementById('promo-code-btn').innerText = '사용 완료';
+            alert('🎉 프로모션 코드 인증 성공! 20,000 G가 지급되었습니다.');
+            render();
+        } else {
+            alert('❌ 잘못된 프로모션 코드입니다. 다시 확인해 주세요.');
+        }
+    });
+
+    // 건물 구매 및 맵 배치
+    window.buyBuilding = function(category, id) {
+        const target = buildingData[category].find(b => b.id === id);
+        if (!target || state.money < target.cost) return;
+
+        let targetIndex = -1;
+        for (let i = 0; i < totalTiles; i++) {
+            if (!state.builtBuildings[i]) {
+                targetIndex = i;
+                break;
+            }
+        }
+
+        if (targetIndex === -1) {
+            alert('도시의 부지가 부족합니다! 건물을 철거하거나 공간을 확보해 주세요.');
+            return;
+        }
+
+        // 비용 지불 (모드 빌딩은 무조건 100 G로 차감 처리)
+        const payment = (category === 'mod') ? 100 : target.cost;
+        state.money -= payment;
+        
+        state.builtBuildings[targetIndex] = {
+            id: target.id,
+            category: category,
+            icon: target.icon,
+            purchaseCost: payment, 
+            pop: target.pop,
+            gps: target.gps
+        };
+
+        target.count += 1;
+        state.population += target.pop;
+        state.gps += target.gps;
+        
+        // 모드 건물은 인플레이션 가격 상승을 적용하지 않고 100G 고정 유지
+        if (category !== 'mod') {
+            target.cost = Math.ceil(target.cost * 1.2);
+        }
+
+        render();
+    };
+
+    // 건물 철거 및 자금 회수 (50% 환불)
+    function demolishBuilding(index) {
+        const building = state.builtBuildings[index];
+        if (!building) return; 
+
+        if (confirm(`이 시설을 철거하시겠습니까?\n[철거 보상: ${Math.floor(building.purchaseCost * 0.5).toLocaleString()} G 반환]`)) {
+            const refund = Math.floor(building.purchaseCost * 0.5);
+            state.money += refund;
+
+            state.population -= building.pop;
+            state.gps -= building.gps;
+
+            const target = buildingData[building.category].find(b => b.id === building.id);
+            if (target) {
+                target.count -= 1;
+                if (building.category !== 'mod') {
+                    target.cost = Math.max(target.baseCost, Math.ceil(target.cost / 1.2));
+                }
+            }
+
+            state.builtBuildings[index] = null;
+            render();
+        }
+    }
+
+    // 💾 핵심 확장 기능: 현재 모드 배치 데이터를 .citybuildermod 텍스트 파일로 내보내기
+    document.getElementById('export-mod-btn').addEventListener('click', () => {
+        // 모드 카테고리 정보와 유저 상태 일부를 암호화에 유리한 JSON 문자열 스트림 형태로 변환
+        const modData = {
+            gameTitle: "MegaCityTycoonModData",
+            timestamp: new Date().toISOString(),
+            currentModStatus: buildingData.mod,
+            placedLayout: state.builtBuildings.map(b => b ? {id: b.id, cat: b.category, icon: b.icon} : null)
+        };
+
+        const jsonString = JSON.stringify(modData, null, 4);
+        
+        // 블롭 데이터를 생성하여 가상 다운로드 트리거 작동
+        const blob = new Blob([jsonString], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        link.href = url;
+        link.download = "my_custom_city.citybuildermod"; // 요청하신 확장자명 지정 파일포맷 아웃풋
+        document.body.appendChild(link);
+        link.click();
+        
+        // 임시 링크 자원 해제
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert("💾 'my_custom_city.citybuildermod' 파일이 정상적으로 추출 및 다운로드되었습니다!");
+    });
+
+    // 초당 자원 자동 갱신 타이머 루프
+    setInterval(() => {
+        state.money += state.gps / 10;
+        render();
+    }, 100);
+
+    // 구동 개시
+    initMap();
+    buildShopUI();
+    render();
+</script>
+</body>
+</html>
